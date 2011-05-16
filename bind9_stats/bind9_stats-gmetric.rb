@@ -38,7 +38,7 @@ if File.directory?($tmp_dir) == false
 end
 
 def reset_stats
-  system("echo :> #{$namedstats}; #{$rndc_exec} stats && grep -A 9 'Name Server Statistics' #{$namedstats} | grep -v '++' | grep queries > #{$tmp_stats_file}")
+  system(":> #{$namedstats}; #{$rndc_exec} stats && grep -A 9 'Name Server Statistics' #{$namedstats} | grep -v '++' | grep queries > #{$tmp_stats_file}")
 end
 
 def read_file
@@ -65,6 +65,10 @@ def ganglia_send(metric, value)
     :tmax => 60,
     :dmax => 120
   })
+end
+
+if File.exist?($namedstats) == false
+  system("#{rndc_exec} stats")
 end
 
 if File.exist?($tmp_stats_file) == false
