@@ -7,6 +7,7 @@ require 'gmetric' # for easy injection into running gmond
 
 $ip = 'localhost' # Ganglia IP/Hostname
 $port = 8649
+$metric_group_name = 'bind9'
 
 $rndc_exec = '/usr/sbin/rndc' # rndc location
 $namedstats = '/var/cache/bind/named.stats' # location of new stats file
@@ -57,6 +58,7 @@ end
 def ganglia_send(metric, value)
     Ganglia::GMetric.send($ip, $port, {
         :name => metric,
+        :group => $metric_group_name,
         :units => 'queries/sec',
         :type => 'float',
         :value => value,
@@ -86,7 +88,7 @@ else
             puts 'Somethings wrong. Rate for '+  metric + ' shouldnt be negative.'
         else
             puts "#{metric} = #{rate}/sec"
-            ganglia_send(metric, value)
+            ganglia_send(metric, rate)
         end
     end
 end
