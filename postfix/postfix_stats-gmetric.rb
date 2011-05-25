@@ -80,7 +80,7 @@ if old_stats && old_time
     if metric == :incoming || metric == :outgoing
       diff = value - old_stats[metric]
       diff > 0 || diff = 0
-      ganglia_send('total_'+metric.to_s, diff, 'messages')
+      ganglia_send('total_'+metric.to_s, diff, 'messages', 'uint8')
     end
     rate = (value - old_stats[metric]) / time_diff
     if rate >= 0
