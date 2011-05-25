@@ -2,8 +2,10 @@
 
 require 'rubygems'
 require 'gmetric'
+require 'yaml'
 
 POSTFIX_LOG = 'mail.log'
+TMP_FILE = 'mail.tmp'
 
 #GMOND
 IP = 'localhost' # Ganglia IP/Hostname
@@ -14,7 +16,7 @@ def ganglia_send(metric, value)
   Ganglia::GMetric.send(IP, PORT, {
     :name => metric,
     :group => METRIC_GNAME,
-    :units => 'queries/sec',
+    :units => 'msgs/sec',
     :type => 'float',
     :value => value,
     :tmax => 60,
@@ -23,33 +25,47 @@ def ganglia_send(metric, value)
 end
 
 def read_log
-  incoming_count = 0
-  outgoing_count = 0
-  bounce_count = 0
-  reject_count = 0
-  deferred_count = 0
+  stats = {
+    "incoming_count" => 0,
+    "outgoing_count" => 0,
+    "bounce_count" => 0,
+    "reject_count" => 0,
+    "deferred_count" => 0
+  }
   File.open(POSTFIX_LOG).each_line do |line|
     case line
       when /status=sent/ && /relay=filter/
-        incoming_count += 1
+        stats['incoming_count'] += 1
       when /status=sent/ && /relay=local/
         # do nothing for local delivery
       when /status=sent/
-        outgoing_count += 1
+        stats['outgoing_count'] += 1
       when /status=bounced/
-        bounce_count += 1
+        stats['bounce_count'] += 1
       when /status=deferred/
-        deferred_count += 1
+        stats['deferred_count'] += 1
       when /NOQUEUE/
-        reject_count += 1
+        stats['reject_count'] += 1
     end
   end
-  puts incoming_count, outgoing_count, bounce_count, reject_count, deferred_count
+  return stats
+end
+
+def make_metrics(old, new)
+
+end
+
+if File.exists?(TMP_FILE)
+  old_stats = YAML.load(File.read(File.expand_path(TMP_FILE)))
+else
+  puts 'Creating baseline, no data reported'
 end
 
 begin
-  read_log
+  new_stats = read_log
 rescue Errno::ENOENT => e
   puts e
   exit 1
 end
+
+File.open(TMP_FILE, 'w').write(new_stats.to_yaml)
