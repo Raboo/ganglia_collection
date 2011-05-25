@@ -23,6 +23,19 @@ def ganglia_send(metric, value)
   })
 end
 
+def mailq
+  in_queue = `qshape deferred | grep TOTAL | awk '{print $2}'`.strip.to_i
+  Ganglia::GMetric.send(IP, PORT, {
+    :name => 'in_queue',
+    :group => METRIC_GNAME,
+    :units => 'messages',
+    :type => 'uint8',
+    :value => in_queue,
+    :tmax => 60,
+    :dmax => 120
+  })
+end
+
 def read_log
   stats = {
     :incoming => 0,
@@ -83,4 +96,5 @@ if old_stats && old_time
   end
 end
 
+mailq
 write_stats(new_stats)
