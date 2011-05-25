@@ -28,30 +28,28 @@ def read_log
   bounce_count = 0
   reject_count = 0
   deferred_count = 0
-  File.open(POSTFIX_LOG) do |s|
-    s.each do |line|
+  File.open(POSTFIX_LOG).each_line do |line|
       case line
-      when /status=sent/
-        case line
-        when /relay=filter/
+        when /status=sent/ && /relay=filter/
           incoming_count += 1
-        when /relay=local/
+        when /status=sent/ && /relay=local/
           # do nothing for local delivery
-        else
+        when /status=sent/
           outgoing_count += 1
-        end
-      when /status=bounced/
-        bounce_count += 1
-      when /status=deferred/
-        deferred_count += 1
-      when /NOQUEUE/
-        reject_count += 1
+        when /status=bounced/
+          bounce_count += 1
+        when /status=deferred/
+          deferred_count += 1
+        when /NOQUEUE/
+          reject_count += 1
       end
-    end
   end
   puts incoming_count, outgoing_count, bounce_count, reject_count, deferred_count
 end
 
-
-puts 'starting'
-read_log
+begin
+  read_log
+rescue Errno::ENOENT => e
+  puts e
+  exit 1
+end
