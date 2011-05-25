@@ -5,7 +5,7 @@ require 'gmetric'
 require 'yaml'
 
 POSTFIX_LOG = 'mail.log'
-TMP_FILE = 'mail.tmp'
+TMP_FILE = '/tmp/mail.tmp.yml'
 
 #GMOND
 IP = 'localhost' # Ganglia IP/Hostname
@@ -26,36 +26,37 @@ end
 
 def read_log
   stats = {
-    "incoming_count" => 0,
-    "outgoing_count" => 0,
-    "bounce_count" => 0,
-    "reject_count" => 0,
-    "deferred_count" => 0
+    "incoming" => 0,
+    "outgoing" => 0,
+    "bounced" => 0,
+    "rejected" => 0,
+    "deferred" => 0
   }
   File.open(POSTFIX_LOG).each_line do |line|
     case line
       when /status=sent/ && /relay=filter/
-        stats['incoming_count'] += 1
+        stats['incoming'] += 1
       when /status=sent/ && /relay=local/
         # do nothing for local delivery
       when /status=sent/
-        stats['outgoing_count'] += 1
+        stats['outgoing'] += 1
       when /status=bounced/
-        stats['bounce_count'] += 1
+        stats['bounced'] += 1
       when /status=deferred/
-        stats['deferred_count'] += 1
+        stats['deferred'] += 1
       when /NOQUEUE/
-        stats['reject_count'] += 1
+        stats['rejected'] += 1
     end
   end
   return stats
 end
 
-def make_metrics(old, new)
-
+def put_stats(stats)
+  File.open(TMP_FILE, 'w').write(stats.to_yaml)
 end
 
 if File.exists?(TMP_FILE)
+  old_time = File.stat(TMP_FILE).mtime
   old_stats = YAML.load(File.read(File.expand_path(TMP_FILE)))
 else
   puts 'Creating baseline, no data reported'
@@ -68,4 +69,12 @@ rescue Errno::ENOENT => e
   exit 1
 end
 
-File.open(TMP_FILE, 'w').write(new_stats.to_yaml)
+if old_stats
+  new_time = Time.now
+  new_stats.each do |metric, value|
+    rate = (value - old_stats[metric]) / (new_time - old_time)
+    ganglia_send(metric, rate)
+  end
+end
+
+put_stats(new_stats)
