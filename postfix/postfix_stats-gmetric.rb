@@ -24,7 +24,7 @@ def ganglia_send(metric, value, units='msgs/sec', type='float')
 end
 
 def mailq
-  in_queue = `qshape deferred | grep TOTAL | awk '{print $2}'`.strip.to_i
+  in_queue = `/usr/sbin/qshape deferred | grep TOTAL | awk '{print $2}'`.strip.to_i
   ganglia_send('in_queue', in_queue, 'messages', 'uint8')
 end
 
@@ -77,6 +77,12 @@ if old_stats && old_time
     exit 1
   end
   new_stats.each do |metric, value|
+    if metric == :incoming || metric == :outgoing
+      diff = value - old_stats[metric]
+      diff > 0 | diff = 0
+      puts "total_#{metric.to_s}: #{diff}"
+      ganglia_send('total_'+metric.to_s, diff, 'messages')
+    end
     rate = (value - old_stats[metric]) / time_diff
     if rate >= 0
       ganglia_send(metric, rate)
