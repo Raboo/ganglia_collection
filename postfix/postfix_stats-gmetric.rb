@@ -11,12 +11,12 @@ IP = 'localhost' # Ganglia IP/Hostname (the host under udp_send_channel)
 PORT = 8649
 METRIC_GNAME = 'postfix'
 
-def ganglia_send(metric, value)
+def ganglia_send(metric, value, units='msgs/sec', type='float')
   Ganglia::GMetric.send(IP, PORT, {
     :name => metric,
     :group => METRIC_GNAME,
-    :units => 'msgs/sec',
-    :type => 'float',
+    :units => units,
+    :type => type,
     :value => value,
     :tmax => 60,
     :dmax => 120
@@ -25,15 +25,7 @@ end
 
 def mailq
   in_queue = `qshape deferred | grep TOTAL | awk '{print $2}'`.strip.to_i
-  Ganglia::GMetric.send(IP, PORT, {
-    :name => 'in_queue',
-    :group => METRIC_GNAME,
-    :units => 'messages',
-    :type => 'uint8',
-    :value => in_queue,
-    :tmax => 60,
-    :dmax => 120
-  })
+  ganglia_send('in_queue', in_queue, 'messages', 'uint8')
 end
 
 def read_log
