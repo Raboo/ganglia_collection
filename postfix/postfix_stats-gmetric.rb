@@ -4,11 +4,10 @@ require 'rubygems'
 require 'gmetric'
 require 'yaml'
 
-POSTFIX_LOG = 'mail.log'
+POSTFIX_LOG = '/var/log/mail.log'
 TMP_FILE = '/tmp/mail.tmp.yml'
 
-#GMOND
-IP = 'localhost' # Ganglia IP/Hostname
+IP = 'localhost' # Ganglia IP/Hostname (the host under udp_send_channel)
 PORT = 8649
 METRIC_GNAME = 'postfix'
 
@@ -77,7 +76,7 @@ if old_stats && old_time
   end
   new_stats.each do |metric, value|
     rate = (value - old_stats[metric]) / time_diff
-    unless rate < 0
+    if rate >= 0
       ganglia_send(metric, rate)
     end
   end
