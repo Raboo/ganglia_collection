@@ -29,20 +29,20 @@ def read_log
   reject_count = 0
   deferred_count = 0
   File.open(POSTFIX_LOG).each_line do |line|
-      case line
-        when /status=sent/ && /relay=filter/
-          incoming_count += 1
-        when /status=sent/ && /relay=local/
-          # do nothing for local delivery
-        when /status=sent/
-          outgoing_count += 1
-        when /status=bounced/
-          bounce_count += 1
-        when /status=deferred/
-          deferred_count += 1
-        when /NOQUEUE/
-          reject_count += 1
-      end
+    case line
+      when /status=sent/ && /relay=filter/
+        incoming_count += 1
+      when /status=sent/ && /relay=local/
+        # do nothing for local delivery
+      when /status=sent/
+        outgoing_count += 1
+      when /status=bounced/
+        bounce_count += 1
+      when /status=deferred/
+        deferred_count += 1
+      when /NOQUEUE/
+        reject_count += 1
+    end
   end
   puts incoming_count, outgoing_count, bounce_count, reject_count, deferred_count
 end
