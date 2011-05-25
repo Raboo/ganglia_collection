@@ -51,7 +51,7 @@ def read_log
   return stats
 end
 
-def put_stats(stats)
+def write_stats(stats)
   File.open(TMP_FILE, 'w').write(stats.to_yaml)
 end
 
@@ -69,12 +69,16 @@ rescue Errno::ENOENT => e
   exit 1
 end
 
-if old_stats
-  new_time = Time.now
+if old_stats && old_time
+  time_diff = Time.now - old_time
+  if time_diff < 1
+    puts 'time difference needs to be > 1 second'
+    exit 1
+  end
   new_stats.each do |metric, value|
-    rate = (value - old_stats[metric]) / (new_time - old_time)
+    rate = (value - old_stats[metric]) / time_diff
     ganglia_send(metric, rate)
   end
 end
 
-put_stats(new_stats)
+write_stats(new_stats)
