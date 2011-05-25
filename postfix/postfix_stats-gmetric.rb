@@ -93,4 +93,4 @@ if old_stats && old_time
 end
 
 mailq
-File.open(TMP_FILE, 'w').write(stats.to_yaml)
+File.open(TMP_FILE, 'w').write(new_stats.to_yaml)
