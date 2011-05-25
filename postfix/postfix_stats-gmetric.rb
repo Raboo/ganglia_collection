@@ -23,7 +23,11 @@ def ganglia_send(metric, value)
 end
 
 def read_log
-  incoming_count, outgoing_count = 0, 0
+  incoming_count = 0
+  outgoing_count = 0
+  bounce_count = 0
+  reject_count = 0
+  deferred_count = 0
   File.open(POSTFIX_LOG) do |s|
     s.each do |line|
       case line
@@ -32,13 +36,20 @@ def read_log
         when /relay=filter/
           incoming_count += 1
         when /relay=local/
+          # do nothing for local delivery
         else
           outgoing_count += 1
         end
+      when /status=bounced/
+        bounce_count += 1
+      when /status=deferred/
+        deferred_count += 1
+      when /NOQUEUE/
+        reject_count += 1
       end
     end
   end
-  puts incoming_count, outgoing_count
+  puts incoming_count, outgoing_count, bounce_count, reject_count, deferred_count
 end
 
 
