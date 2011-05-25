@@ -77,7 +77,10 @@ if old_stats && old_time
   end
   new_stats.each do |metric, value|
     rate = (value - old_stats[metric]) / time_diff
-    ganglia_send(metric, rate)
+    unless rate < 0
+      puts 'something happened rate is negative'
+      ganglia_send(metric, rate)
+    end
   end
 end
 
