@@ -29,14 +29,15 @@ def read_log
     :outgoing => 0,
     :bounced => 0,
     :rejected => 0,
-    :deferred => 0
+    :deferred => 0,
+    :local => 0
   }
   File.open(POSTFIX_LOG).each_line do |line|
     case line
       when /status=sent/ && /relay=filter/
         stats[:incoming] += 1
       when /status=sent/ && /relay=local/
-        # do nothing for local delivery
+        stats[:local] += 1
       when /status=sent/
         stats[:outgoing] += 1
       when /status=bounced/
