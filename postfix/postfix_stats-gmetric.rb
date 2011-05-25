@@ -64,8 +64,11 @@ def read_log
   return stats
 end
 
-def write_stats(stats)
-  File.open(TMP_FILE, 'w').write(stats.to_yaml)
+begin
+  new_stats = read_log
+rescue Errno::ENOENT => e
+  puts e
+  exit 1
 end
 
 if File.exists?(TMP_FILE)
@@ -73,13 +76,6 @@ if File.exists?(TMP_FILE)
   old_stats = YAML.load(File.read(File.expand_path(TMP_FILE)))
 else
   puts 'Creating baseline, no data reported'
-end
-
-begin
-  new_stats = read_log
-rescue Errno::ENOENT => e
-  puts e
-  exit 1
 end
 
 if old_stats && old_time
@@ -97,4 +93,4 @@ if old_stats && old_time
 end
 
 mailq
-write_stats(new_stats)
+File.open(TMP_FILE, 'w').write(stats.to_yaml)
