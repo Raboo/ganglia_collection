@@ -9,7 +9,7 @@ IP = 'localhost' # Ganglia IP/Hostname
 PORT = 8649
 METRIC_GROUP_NAME = 'bind9'
 
-DEBUG = true
+DEBUG = false
 NAMEDSTATS = '/var/cache/bind/named.stats' # location of new stats file
 TMP_DIR = '/tmp/bindgmetric' # where to store last file
 
