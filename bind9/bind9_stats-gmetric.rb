@@ -4,8 +4,6 @@
 # 
 # Edited kmullin's script to use gmetric binary instead of the gmetric gem.
 
-require 'rubygems'
-
 DEBUG = false
 NAMEDSTATS = '/var/cache/bind/named.stats' # location of new stats file
 TMP_DIR = '/var/cache/bind/named.stats.last' # where to store last file
