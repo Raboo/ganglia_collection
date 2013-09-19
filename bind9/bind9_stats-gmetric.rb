@@ -1,19 +1,24 @@
 #!/usr/bin/env ruby
 # Based on original perl script from Vladimir Vuksan (http://vuksan.com/linux/ganglia/#Bind_stats)
 # Vladimir's script didn't work with BIND9.7+ stats file
+# 
+# Edited kmullin's script to use gmetric binary instead of the gmetric gem.
 
 require 'rubygems'
-require 'gmetric' # for easy injection into running gmond
-
-IP = 'localhost' # Ganglia IP/Hostname
-PORT = 8649
-METRIC_GROUP_NAME = 'bind9'
 
 DEBUG = false
 NAMEDSTATS = '/var/cache/bind/named.stats' # location of new stats file
-TMP_DIR = '/tmp/bindgmetric' # where to store last file
+TMP_DIR = '/var/cache/bind/named.stats.last' # where to store last file
 
-RNDC_EXEC = `which rndc`.chomp # rndc location
+GMETRIC_EXEC = "/usr/bin/gmetric";
+unless File.executable_real?(GMETRIC_EXEC)
+  puts "Cannot exec #{GMETRIC_EXEC}"
+  exit 1
+end
+GMETRIC_OPTIONS = "-d 120 -u queries/sec -tfloat -n";
+GMETRIC_CMD = "#{GMETRIC_EXEC} #{GMETRIC_OPTIONS}"
+
+RNDC_EXEC = "/usr/sbin/rndc"
 unless File.executable_real?(RNDC_EXEC)
   puts "Cannot exec #{RNDC_EXEC}"
   exit 1
@@ -53,16 +58,8 @@ class BindGMetric
     return hash, f.stat.mtime
   end
 
-  def ganglia_send(metric, value)
-    Ganglia::GMetric.send(IP, PORT, {
-      :name => metric,
-      :group => METRIC_GROUP_NAME,
-      :units => 'queries/sec',
-      :type => 'float',
-      :value => value,
-      :tmax => 60,
-      :dmax => 120
-    }) unless DEBUG
+  def send_metrics(metric, value)
+    `#{GMETRIC_CMD} dns_#{metric} -v #{value}` unless DEBUG
     log "#{metric} = #{value}/sec"
   end
 
@@ -87,7 +84,7 @@ class BindGMetric
         if rate < 0
           log 'Somethings wrong. Rate for ' +  metric + ' shouldnt be negative.'
         else
-          ganglia_send(metric, rate) if @counter_metrics.keys.include?(metric)
+          send_metrics(metric, rate) if @counter_metrics.keys.include?(metric)
         end
       end
     end
